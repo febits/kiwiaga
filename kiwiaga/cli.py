@@ -6,6 +6,8 @@ from rich.console import Console
 from typing_extensions import Annotated
 
 from kiwiaga import __app__, __version__
+from kiwiaga.config import Config
+from kiwiaga.manga import Manga
 
 app = typer.Typer(help="")
 console = Console()
@@ -39,7 +41,31 @@ def main(
 @app.command()
 def add(manga_uuid: Annotated[UUID, typer.Argument(...)]):
     """Add a new manga to list from UUID."""
-    print(manga_uuid)
+
+    manga = Manga(manga_uuid)
+    if manga.exists():
+        config = Config()
+
+        if not config.path.exists():
+            config.write(config.template)
+
+        config.read()
+
+        if str(manga_uuid) in config.yaml["mangas"]:
+            console.print("Manga already exists in the list.")
+            raise typer.Exit(1)
+
+        config.yaml["mangas"].append(str(manga_uuid))
+        config.write(config.yaml)
+
+        console.print(
+            f"Manga from UUID ({manga_uuid}) has been added to the list."
+        )
+
+        raise typer.Exit(0)
+
+    console.print(f"Manga from UUID ({manga_uuid}) doesn't exist.")
+    raise typer.Exit(1)
 
 
 @app.command()
