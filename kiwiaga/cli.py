@@ -1,6 +1,9 @@
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
+import humanize
+import pytz
 import typer
 from rich.console import Console
 from typing_extensions import Annotated
@@ -58,9 +61,7 @@ def add(manga_uuid: Annotated[UUID, typer.Argument(...)]):
         config.yaml["mangas"].append(str(manga_uuid))
         config.write(config.yaml)
 
-        console.print(
-            f"Manga from UUID ({manga_uuid}) has been added to the list."
-        )
+        console.print(f"Manga from UUID ({manga_uuid}) has been added to the list.")
 
         raise typer.Exit(0)
 
@@ -71,4 +72,34 @@ def add(manga_uuid: Annotated[UUID, typer.Argument(...)]):
 @app.command()
 def show(lang: Annotated[Optional[str], typer.Argument(...)] = "en"):
     """Show latest chapter info from manga list."""
-    print(lang)
+
+    config = Config()
+    config.read()
+
+    if config.yaml["mangas"]:
+        for manga_uuid in config.yaml["mangas"]:
+            manga = Manga(manga_uuid, language=lang)
+
+            if not manga.get_info():
+                console.print(f"Couldn't get info about {manga_uuid}")
+                continue
+
+            publish_at = datetime.fromisoformat(manga.lastchap_publish_at).replace(
+                tzinfo=pytz.utc
+            )
+            publish_at = humanize.naturaltime(
+                datetime.now().replace(tzinfo=pytz.utc) - publish_at
+            )
+
+            left_msg = (
+                f'[b]{manga.name}[/]: {manga.lastchap} - "{manga.lastchap_title}"'
+            )
+            right_msg = f"({publish_at})"
+
+            padding = console.size.width - len(left_msg) - len(right_msg) + 6
+            console.print(f"{left_msg}{' ' * padding}{right_msg}")
+
+        raise typer.Exit(0)
+
+    console.print("Empty manga list.")
+    raise typer.Exit(1)
