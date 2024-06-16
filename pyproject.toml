@@ -1,9 +1,13 @@
 [tool.poetry]
 name = "kiwiaga"
 version = "0.1.0"
-description = ""
+description = "A CLI tool designed for interact with MangaDex API and show info about manga."
 authors = ["febits <febits@proton.me>"]
 readme = "README.md"
+
+[tools.poetry.urls]
+"Homepage" = "https://pypi.org/project/kiwiaga"
+"Source" = "https://github.com/febits/kiwiaga"
 
 [tool.poetry.scripts]
 kiwiaga = "kiwiaga.cli:app"
