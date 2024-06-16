@@ -5,7 +5,7 @@ all: black isort pylint
 
 .PHONY: black
 black:
-	-poetry run black -l 79 $(SRC)
+	-poetry run black $(SRC)
 
 .PHONY: isort
 isort:
